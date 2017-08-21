@@ -76,7 +76,7 @@ var $ = function(selector){
     // 函数原型
     Proxy.prototype = {
         css: function(style, value){
-            for(var i = 0;i < this.doms;i++){
+            for(var i = 0;i < this.doms.length;i++){
                 this.doms[i].style[style] = value;
             }
             // 那么链式操作该怎么进行呢？答案很简单。
@@ -85,7 +85,7 @@ var $ = function(selector){
             return this;
         },
         html:function(html){
-            for(var i = 0;i < this.doms;i++){
+            for(var i = 0;i < this.doms.length;i++){
                 this.doms[i].innerHTML = html;
             }
             return this;
@@ -127,7 +127,7 @@ X（无）  | function(普通函数)|
      Proxy.prototype = {
         // 好处：如果需要修改循环结构，只需要修改each，大大增强代码维护性
         each: function(callback){
-            for(var i = 0;i < this.doms;i++){
+            for(var i = 0;i < this.doms.length;i++){
                 // call调用：还是调用Proxy函数
                 // i => index, this.doms[i] => object
                 callback.call(this, i, this.doms[i]);
@@ -165,7 +165,7 @@ var $ = jQuery = (function(){
       Proxy.prototype = {
         // 好处：如果需要修改循环结构，只需要修改each，大大增强代码维护性
         each: function(callback){
-            for(var i = 0;i < this.doms;i++){
+            for(var i = 0;i < this.doms.length;i++){
             // call调用：还是调用Proxy函数
                 callback.call(this, i, this.doms[i]);
             }
