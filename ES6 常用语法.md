@@ -398,7 +398,7 @@ console.log(Array.from('\u767d\u8272\u7684\u6d77'));
 注意：属性名代表了数组的索引号，如果没有这个索引号，转出来的数组中对应的元素就为空。
 
 ```
-console.log('%s', Array.from({
+console.log(Array.from({
   0: '0',
   1: '1',
   3: '3',
