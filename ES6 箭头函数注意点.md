@@ -45,7 +45,7 @@ function Person(name) {
     this.name = name;
 }
 
-Cat.prototype.sayName = () => {
+Person.prototype.sayName = () => {
     console.log(this === window); // => true
     return this.name;
 };
@@ -61,7 +61,7 @@ function Person(name) {
     this.name = name;
 }
 
-Cat.prototype.sayName = function() {
+Person.prototype.sayName = function() {
     console.log(this === Person); // => true
     return this.name;
 };
