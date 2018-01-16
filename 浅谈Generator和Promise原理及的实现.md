@@ -99,4 +99,57 @@ Promise 并没有大家想的那么神秘，其本质就是一个状态机。
 - __success_res  用来存储成功时的参数
 - __error_res  用来存储失败时的参数
 - __status  用来存储状态
-- __
+- __watchList  用来存储执行队列
+
+下面就手动实现一个 Promise 
+```javaScript
+class Promise1 {
+    constructor(fn) {
+        // 执行队列
+        this.__watchList = [];
+        // 成功结果
+        this.__success_res = null;
+        // 失败结果
+        this.__error_res = null;
+        // 状态
+        this.__status = "";
+        fn((...args) => {
+        	// 保存成功数据
+            this.__success_res = args;
+            // 状态改为成功
+            this.__status = "success";
+            // 若为异步则回头执行then成功方法
+            this.__watchList.forEach(element => {
+                element.fn1(...args);
+            });
+        }, (...args) => {
+        	// 保存失败数据
+            this.__error_res = args;
+            // 状态改为失败
+            this.__status = "error";
+            // 若为异步则回头执行then失败方法
+            this.__watchList.forEach(element => {
+                element.fn2(...args);
+            });
+        });
+    }
+
+    // then 函数
+    then(fn1, fn2) {
+        if (this.__status === "success") {
+            fn1(...this.__success_res);
+        } else if (this.__status === "error") {
+            fn2(...this.__error_res);
+        } else {
+            this.__watchList.push({
+                fn1, fn2
+            })
+        }
+    }
+}
+```
+
+这样就简单实现了 Promise 的功能，在使用上和JS的 Promise 并无其他区别，若想实现 Promise.all 方法，则只需要小小的改进：
+
+```javaScript
+```
