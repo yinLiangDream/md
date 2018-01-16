@@ -149,7 +149,32 @@ class Promise1 {
 }
 ```
 
-这样就简单实现了 Promise 的功能，在使用上和JS的 Promise 并无其他区别，若想实现 Promise.all 方法，则只需要小小的改进：
+这样就简单实现了 Promise 的功能，在使用上和JS的 Promise 并无其他区别，若想实现 Promise.all 方法，则只需要进行小小的迭代：
 
 ```javaScript
+Promise1.all = function(arr) {
+	// 存放结果集
+	let result = [];
+	return Promise1(function(resolve, reject) {
+		let i = 0;
+		// 进行迭代执行
+		function next() {
+			arr[i].then(function(res) {
+				// 存放每个方法的返回值
+				result.push(res);
+				i++;
+				// 若全部执行完
+				if (i === result.length) {
+					// 执行then回调
+					resolve(result);
+				} else {
+					// 继续迭代
+					next();
+				}
+			},reject)
+		}
+	})
+}
 ```
+
+至此，Generator 和 Promise 都已解析完成。
