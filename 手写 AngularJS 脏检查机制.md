@@ -29,7 +29,6 @@
 老规矩，初始化页面
 
 ```html
-
 <!DOCTYPE html>
 
 <html>
@@ -81,180 +80,135 @@
 </body>
 
 </html>
-
 ```
 
 下面是`JS`源码：`1.0`版本
 
 ```javascript
-
 window.onload = function() {
+  'use strict';
 
-    'use strict';
+  var scope = {
+    // 相当于$scope
 
-    var scope = { // 相当于$scope
+    increase: function() {
+      this.data++;
+    },
 
-        "increase": function() {
+    decrease: function() {
+      this.data--;
+    },
 
-            this.data++;
+    data: 0
+  };
 
-        },
+  function bind() {
+    var list = document.querySelectorAll('[ng-click]');
 
-        "decrease": function() {
+    for (var i = 0, l = list.length; i < l; i++) {
+      list[i].onclick = (function(index) {
+        return function() {
+          var func = this.getAttribute('ng-click');
 
-            this.data--;
+          scope[func](scope);
 
-        },
+          apply();
+        };
+      })(i);
+    }
+  }
 
-        data: 0
+  function apply() {
+    var list = document.querySelectorAll('[ng-bind]');
 
-    }
+    for (var i = 0, l = list.length; i < l; i++) {
+      var bindData = list[i].getAttribute('ng-bind');
 
-    function bind() {
+      list[i].innerHTML = scope[bindData];
+    }
+  }
 
-        var list = document.querySelectorAll('[ng-click]');
+  bind();
 
-        for (var i = 0, l = list.length; i < l; i++) {
-
-            list[i].onclick = (function(index) {
-
-                return function() {
-
-                    var func = this.getAttribute('ng-click');
-
-                    scope[func](scope);
-
-                    apply();
-
-                }
-
-            })(i)
-
-        }
-
-    }
-
-    function apply() {
-
-        var list = document.querySelectorAll('[ng-bind]');
-
-        for (var i = 0, l = list.length; i < l; i++) {
-
-            var bindData = list[i].getAttribute('ng-bind');
-
-            list[i].innerHTML = scope[bindData];
-
-        }
-
-    }
-
-    bind();
-
-    apply();
-
-}
-
+  apply();
+};
 ```
 
-没错，我只是我偷懒实现的……其中还有很多bug，虽然实现了页面效果，但是仍然有很多缺陷，比如方法我直接就定义在了`scope`里面，可以说，这一套代码是我为了实现双向绑定而实现的双向绑定。
+没错，我只是我偷懒实现的……其中还有很多 bug，虽然实现了页面效果，但是仍然有很多缺陷，比如方法我直接就定义在了`scope`里面，可以说，这一套代码是我为了实现双向绑定而实现的双向绑定。
 
 回到主题，这段代码中我有用到脏检查吗？
 
 完全没有。
 
-这段代码的意思就是`bind()`方法绑定click事件，`apply()`方法显示到了页面上去而已。
+这段代码的意思就是`bind()`方法绑定 click 事件，`apply()`方法显示到了页面上去而已。
 
 OK，抛开这段代码，先看`2.0`版本的代码
 
 ```javascript
-
 window.onload = function() {
+  function getNewValue(scope) {
+    return scope[this.name];
+  }
 
-    function getNewValue(scope) {
+  function $scope() {
+    // AngularJS里，$$表示其为内部私有成员
 
-        return scope[this.name];
+    this.$$watchList = [];
+  } // 脏检查监测变化的一个方法
 
-    }
+  $scope.prototype.$watch = function(name, getNewValue, listener) {
+    var watch = {
+      // 标明watch对象
 
-    function $scope() {
+      name: name, // 获取watch监测对象的值
 
-        // AngularJS里，$$表示其为内部私有成员
+      getNewValue: getNewValue, // 监听器，值发生改变时的操作
 
-        this.$$watchList = [];
+      listener: listener
+    };
 
-    }
+    this.$$watchList.push(watch);
+  };
 
-    // 脏检查监测变化的一个方法
+  $scope.prototype.$digest = function() {
+    var list = this.$$watchList;
 
-    $scope.prototype.$watch = function(name, getNewValue, listener) {
+    for (var i = 0; i < list.length; i++) {
+      list[i].listener();
+    }
+  }; // 下面是实例化内容
 
-        var watch = {
+  var scope = new $scope();
 
-            // 标明watch对象
+  scope.$watch(
+    'first',
+    function() {
+      console.log('I have got newValue');
+    },
+    function() {
+      console.log('I am the listener');
+    }
+  );
 
-            name: name,
+  scope.$watch(
+    'second',
+    function() {
+      console.log('I have got newValue  =====2');
+    },
+    function() {
+      console.log('I am the listener =====2');
+    }
+  );
 
-            // 获取watch监测对象的值
-
-            getNewValue: getNewValue,
-
-            // 监听器，值发生改变时的操作
-
-            listener: listener
-
-        };
-
-        this.$$watchList.push(watch);
-
-    }
-
-    $scope.prototype.$digest = function() {
-
-        var list = this.$$watchList;
-
-        for (var i = 0; i < list.length; i++) {
-
-            list[i].listener();
-
-        }
-
-    }
-
-    // 下面是实例化内容
-
-    var scope = new $scope;
-
-    scope.$watch('first', function() {
-
-        console.log("I have got newValue");
-
-    }, function() {
-
-        console.log("I am the listener");
-
-    })
-
-    scope.$watch('second', function() {
-
-        console.log("I have got newValue  =====2");
-
-    }, function() {
-
-        console.log("I am the listener =====2");
-
-    })
-
-    scope.$digest();
-
-}
-
+  scope.$digest();
+};
 ```
 
 这个版本中，没有数据双向绑定的影子，这只是一个脏检查的原理。
 
-引入2.0版本，看看在控制台发生了什么。
+引入 2.0 版本，看看在控制台发生了什么。
 
-控制台打印出了  `I am the listener` 和 `I am the listener =====2` 这就说明，我们的观察成功了。
+控制台打印出了   `I am the listener` 和 `I am the listener =====2` 这就说明，我们的观察成功了。
 
 不过，仅此而已。
 
@@ -269,157 +223,105 @@ window.onload = function() {
 先将 `listener()` 方法输出内容改变，仿照 `AngularJS` 的 `$watch` 方法，只传两个参数：
 
 ```javascript
-
 scope.$watch('first', function(newValue, oldValue) {
-
-    console.log("new: " + newValue + "=========" + "old: " + oldValue);
-
-})
+  console.log('new: ' + newValue + '=========' + 'old: ' + oldValue);
+});
 
 scope.$watch('second', function(newValue, oldValue) {
-
-    console.log("new2: " + newValue + "=========" + "old2: " + oldValue);
-
-})
-
+  console.log('new2: ' + newValue + '=========' + 'old2: ' + oldValue);
+});
 ```
 
 再将 `$digest` 方法进行修改
 
 ```javascript
-
 $scope.prototype.$digest = function() {
+  var list = this.$$watchList;
 
-    var list = this.$$watchList;
+  for (var i = 0; i < list.length; i++) {
+    // 获取watch对应的对象
 
-    for (var i = 0; i < list.length; i++) {
+    var watch = list[i]; // 获取new和old的值
 
-        // 获取watch对应的对象
+    var newValue = watch.getNewValue(this);
 
-        var watch = list[i];
+    var oldValue = watch.last; // 进行脏检查
 
-        // 获取new和old的值
+    if (newValue !== oldValue) {
+      watch.listener(newValue, oldValue);
 
-        var newValue = watch.getNewValue(this);
-
-        var oldValue = watch.last;
-
-        // 进行脏检查
-
-        if (newValue !== oldValue) {
-
-            watch.listener(newValue, oldValue);
-
-            watch.last = newValue;
-
-        }
-
-        // list[i].listener();
-
-    }
-
-}
-
+      watch.last = newValue;
+    } // list[i].listener();
+  }
+};
 ```
 
 最后将 `getNewValue` 方法绑定到 `$scope` 的原型上，修改 `watch` 方法所传的参数：
 
 ```javascript
-
 $scope.prototype.getNewValue = function(scope) {
-
-    return scope[this.name];
-
-}
+  return scope[this.name];
+};
 
 // 脏检查监测变化的一个方法
 
 $scope.prototype.$watch = function(name, listener) {
+  var watch = {
+    // 标明watch对象
 
-    var watch = {
+    name: name, // 获取watch监测对象的值
 
-        // 标明watch对象
+    getNewValue: this.getNewValue, // 监听器，值发生改变时的操作
 
-        name: name,
+    listener: listener
+  };
 
-        // 获取watch监测对象的值
-
-        getNewValue: this.getNewValue,
-
-        // 监听器，值发生改变时的操作
-
-        listener: listener
-
-    };
-
-    this.$$watchList.push(watch);
-
-}
-
+  this.$$watchList.push(watch);
+};
 ```
 
 最后定义这两个对象：
 
 ```javascript
+scope.first = 1;
 
-    scope.first = 1;
-
-    scope.second = 2;
-
+scope.second = 2;
 ```
 
 这个时候再运行一遍代码，会发现控制台输出了 `new: 1=========old: undefined` 和 `new2: 2=========old2: undefined`
 
-OK，代码到这一步，我们实现了watch观察到了新值和老值。
+OK，代码到这一步，我们实现了 watch 观察到了新值和老值。
 
 这段代码的 `watch` 我是手动触发的，那个该如何进行自动触发呢？
 
 ```javascript
+$scope.prototype.$digest = function() {
+  var list = this.$$watchList; // 判断是否脏了
 
-    $scope.prototype.$digest = function() {
+  var dirty = true;
 
-        var list = this.$$watchList;
+  while (dirty) {
+    dirty = false;
 
-        // 判断是否脏了
+    for (var i = 0; i < list.length; i++) {
+      // 获取watch对应的对象
 
-        var dirty = true;
+      var watch = list[i]; // 获取new和old的值
 
-        while (dirty) {
+      var newValue = watch.getNewValue(this);
 
-            dirty = false;
+      var oldValue = watch.last; // 关键来了，进行脏检查
 
-            for (var i = 0; i < list.length; i++) {
+      if (newValue !== oldValue) {
+        watch.listener(newValue, oldValue);
 
-                // 获取watch对应的对象
+        watch.last = newValue;
 
-                var watch = list[i];
-
-                // 获取new和old的值
-
-                var newValue = watch.getNewValue(this);
-
-                var oldValue = watch.last;
-
-                // 关键来了，进行脏检查
-
-                if (newValue !== oldValue) {
-
-                    watch.listener(newValue, oldValue);
-
-                    watch.last = newValue;
-
-                    dirty = true;
-
-                }
-
-                // list[i].listener();
-
-            }
-
-        }
-
-    }
-
+        dirty = true;
+      } // list[i].listener();
+    }
+  }
+};
 ```
 
 那我问一个问题，为什么我要写两个 `watch` 对象？
@@ -429,259 +331,185 @@ OK，代码到这一步，我们实现了watch观察到了新值和老值。
 那么，`AngularJS` 是如何避免的呢？
 
 ```javascript
+$scope.prototype.$digest = function() {
+  var list = this.$$watchList; // 判断是否脏了
 
-    $scope.prototype.$digest = function() {
+  var dirty = true; // 执行次数限制
 
-        var list = this.$$watchList;
+  var checkTime = 0;
 
-        // 判断是否脏了
+  while (dirty) {
+    dirty = false;
 
-        var dirty = true;
+    for (var i = 0; i < list.length; i++) {
+      // 获取watch对应的对象
 
-        // 执行次数限制
+      var watch = list[i]; // 获取new和old的值
 
-        var checkTime = 0;
+      var newValue = watch.getNewValue(this);
 
-        while (dirty) {
+      var oldValue = watch.last; // 关键来了，进行脏检查
 
-            dirty = false;
+      if (newValue !== oldValue) {
+        watch.listener(newValue, oldValue);
 
-            for (var i = 0; i < list.length; i++) {
+        watch.last = newValue;
 
-                // 获取watch对应的对象
+        dirty = true;
+      } // list[i].listener();
+    }
 
-                var watch = list[i];
+    checkTime++;
 
-                // 获取new和old的值
-
-                var newValue = watch.getNewValue(this);
-
-                var oldValue = watch.last;
-
-                // 关键来了，进行脏检查
-
-                if (newValue !== oldValue) {
-
-                    watch.listener(newValue, oldValue);
-
-                    watch.last = newValue;
-
-                    dirty = true;
-
-                }
-
-                // list[i].listener();
-
-            }
-
-            checkTime++;
-
-            if (checkTime > 10 && checkTime) {
-
-                throw new Error("次数过多！")
-
-            }
-
-        }
-
-    }
-
+    if (checkTime > 10 && checkTime) {
+      throw new Error('次数过多！');
+    }
+  }
+};
 ```
 
 ```javascript
-
 scope.$watch('first', function(newValue, oldValue) {
+  scope.second++;
 
-    scope.second++;
-
-    console.log("new: " + newValue + "=========" + "old: " + oldValue);
-
-})
+  console.log('new: ' + newValue + '=========' + 'old: ' + oldValue);
+});
 
 scope.$watch('second', function(newValue, oldValue) {
+  scope.first++;
 
-    scope.first++;
-
-    console.log("new2: " + newValue + "=========" + "old2: " + oldValue);
-
-})
-
+  console.log('new2: ' + newValue + '=========' + 'old2: ' + oldValue);
+});
 ```
 
-这个时候我们查看控制台，发现循环了10次之后，抛出了异常。
+这个时候我们查看控制台，发现循环了 10 次之后，抛出了异常。
 
 这个时候，脏检查机制已经实现，是时候将这个与第一段代码进行合并了，`3.0` 代码横空出世。
 
 ```javascript
-
 window.onload = function() {
+  'use strict';
 
-    'use strict';
+  function Scope() {
+    this.$$watchList = [];
+  }
 
-    function Scope() {
+  Scope.prototype.getNewValue = function() {
+    return $scope[this.name];
+  };
 
-        this.$$watchList = [];
+  Scope.prototype.$watch = function(name, listener) {
+    var watch = {
+      name: name,
 
-    }
+      getNewValue: this.getNewValue,
 
-    Scope.prototype.getNewValue = function() {
+      listener: listener || function() {}
+    };
 
-        return $scope[this.name];
+    this.$$watchList.push(watch);
+  };
 
-    }
+  Scope.prototype.$digest = function() {
+    var dirty = true;
 
-    Scope.prototype.$watch = function(name, listener) {
+    var checkTimes = 0;
 
-        var watch = {
+    while (dirty) {
+      dirty = this.$$digestOnce();
 
-            name: name,
+      checkTimes++;
 
-            getNewValue: this.getNewValue,
+      if (checkTimes > 10 && dirty) {
+        throw new Error('循环过多');
+      }
+    }
+  };
 
-            listener: listener || function() {}
+  Scope.prototype.$$digestOnce = function() {
+    var dirty;
 
-        };
+    var list = this.$$watchList;
 
-        this.$$watchList.push(watch);
+    for (var i = 0; i < list.length; i++) {
+      var watch = list[i];
 
-    }
+      var newValue = watch.getNewValue();
 
-    Scope.prototype.$digest = function() {
+      var oldValue = watch.last;
 
-        var dirty = true;
+      if (newValue !== oldValue) {
+        watch.listener(newValue, oldValue);
 
-        var checkTimes = 0;
+        dirty = true;
+      } else {
+        dirty = false;
+      }
 
-        while (dirty) {
+      watch.last = newValue;
+    }
 
-            dirty = this.$$digestOnce();
+    return dirty;
+  };
 
-            checkTimes++;
+  var $scope = new Scope();
 
-            if (checkTimes > 10 && dirty) {
+  $scope.sum = 0;
 
-                throw new Error("循环过多");
+  $scope.data = 0;
 
-            }
+  $scope.increase = function() {
+    this.data++;
+  };
 
-        }
+  $scope.decrease = function() {
+    this.data--;
+  };
 
-    }
+  $scope.equal = function() {};
 
-    Scope.prototype.$$digestOnce = function() {
+  $scope.faciend = 3;
 
-        var dirty;
+  $scope.$watch('data', function(newValue, oldValue) {
+    $scope.sum = newValue * $scope.faciend;
 
-        var list = this.$$watchList;
+    console.log('new: ' + newValue + '=========' + 'old: ' + oldValue);
+  });
 
-        for (var i = 0; i < list.length; i++) {
+  function bind() {
+    var list = document.querySelectorAll('[ng-click]');
 
-            var watch = list[i];
+    for (var i = 0, l = list.length; i < l; i++) {
+      list[i].onclick = (function(index) {
+        return function() {
+          var func = this.getAttribute('ng-click');
 
-            var newValue = watch.getNewValue();
+          $scope[func]($scope);
 
-            var oldValue = watch.last;
+          $scope.$digest();
 
-            if (newValue !== oldValue) {
+          apply();
+        };
+      })(i);
+    }
+  }
 
-                watch.listener(newValue, oldValue);
+  function apply() {
+    var list = document.querySelectorAll('[ng-bind]');
 
-                dirty = true;
+    for (var i = 0, l = list.length; i < l; i++) {
+      var bindData = list[i].getAttribute('ng-bind');
 
-            } else {
+      list[i].innerHTML = $scope[bindData];
+    }
+  }
 
-                dirty = false;
+  bind();
 
-            }
+  $scope.$digest();
 
-            watch.last = newValue;
-
-        }
-
-        return dirty;
-
-    }
-
-    var $scope = new Scope();
-
-    $scope.sum = 0;
-
-    $scope.data = 0;
-
-    $scope.increase = function() {
-
-        this.data++;
-
-    };
-
-    $scope.decrease = function() {
-
-        this.data--;
-
-    };
-
-    $scope.equal = function() {
-
-    };
-
-    $scope.faciend = 3
-
-    $scope.$watch('data', function(newValue, oldValue) {
-
-        $scope.sum = newValue * $scope.faciend;
-
-        console.log("new: " + newValue + "=========" + "old: " + oldValue);
-
-    });
-
-    function bind() {
-
-        var list = document.querySelectorAll('[ng-click]');
-
-        for (var i = 0, l = list.length; i < l; i++) {
-
-            list[i].onclick = (function(index) {
-
-                return function() {
-
-                    var func = this.getAttribute('ng-click');
-
-                    $scope[func]($scope);
-
-                    $scope.$digest();
-
-                    apply();
-
-                }
-
-            })(i)
-
-        }
-
-    }
-
-    function apply() {
-
-        var list = document.querySelectorAll('[ng-bind]');
-
-        for (var i = 0, l = list.length; i < l; i++) {
-
-            var bindData = list[i].getAttribute('ng-bind');
-
-            list[i].innerHTML = $scope[bindData];
-
-        }
-
-    }
-
-    bind();
-
-    $scope.$digest();
-
-    apply();
-
-}
-
+  apply();
+};
 ```
 
 页面上将 合计 放开，看看会有什么变化。
