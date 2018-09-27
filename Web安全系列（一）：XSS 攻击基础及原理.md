@@ -1,3 +1,7 @@
+---
+typora-copy-images-to: ipic
+---
+
 跨站脚本攻击（XSS）是客户端脚本安全的头号大敌。本文章深入探讨 XSS 攻击原理，下一章（XSS 攻击进阶）将深入讨论 XSS 进阶攻击方式。
 
 本系列将持续更新。
@@ -45,7 +49,7 @@ XSS 攻击，通常指黑客通过 **HTML 注入** 篡改网页，插入恶意�
 
 这个时候我们在页面上点击 `获取数据` 按钮时，页面上会出现如下信息：
 
-![image-20180911193528855](https://github.com/yinLiangDream/md/blob/master/Web%E5%AE%89%E5%85%A8%E7%B3%BB%E5%88%97%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9AXSS%20%E6%94%BB%E5%87%BB%E5%9F%BA%E7%A1%80%E5%8F%8A%E5%8E%9F%E7%90%86.assets/165c8b23a9f28026%3Fw=2330&h=500&f=png&s=72113.png?raw=true)
+![image-20180911193528855](http://md-1255362963.cos.ap-chengdu.myqcloud.com/2018-09-26-030516.png)
 
 你会发现，本应该作为数据展示在界面上的内容居然执行了，这显然是开发者不希望看到的。
 
